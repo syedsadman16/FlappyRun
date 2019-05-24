@@ -12,8 +12,8 @@ import java.util.Random;
 public class MyGdxGame extends ApplicationAdapter {
 	SpriteBatch batch;
 	Texture background;
-	Random random;
 	int GameState;
+    Random random;
 	//For the dragon character
 	Texture[] dragon;
 	int dragonSpeed;
@@ -23,19 +23,18 @@ public class MyGdxGame extends ApplicationAdapter {
     double gravity = 0.7;
     float velocity = 0;
     //Projectiles
-	Texture gems[];
+	Texture[] gem;
+	int gemCount;
 	ArrayList<Integer> gemX = new ArrayList<Integer>();
 	ArrayList<Integer> gemY = new ArrayList<Integer>();
-	int gemRate; //rate at which gems are produced
-	Texture tree;
-	ArrayList<Integer> treeX = new ArrayList<Integer>();
-	ArrayList<Integer> treeY = new ArrayList<Integer>();
-	int treeRate;
 	Texture fireball;
+	int fireballCount;
 	ArrayList<Integer> fireballX = new ArrayList<Integer>();
 	ArrayList<Integer> fireballY = new ArrayList<Integer>();
-	int fireballRate;
-
+	Texture tree;
+	int treeCount;
+    ArrayList<Integer> treeX = new ArrayList<Integer>();
+    ArrayList<Integer> treeY = new ArrayList<Integer>();
 
 
 
@@ -44,7 +43,6 @@ public class MyGdxGame extends ApplicationAdapter {
 	public void create () {
 		batch = new SpriteBatch();
 		background = new Texture("Full-Background.png");
-		background.setWrap(Texture.TextureWrap.ClampToEdge, Texture.TextureWrap.ClampToEdge);
 
 		//Setup all the frames for the dragon
 		dragon = new Texture[4];
@@ -56,38 +54,42 @@ public class MyGdxGame extends ApplicationAdapter {
         //height of the dragon will change as it goes up and down
         dragY = Gdx.graphics.getHeight()/2;
 
-        //Setup textures
 		random = new Random();
+
+		//Setup textures
 		fireball = new Texture("fireball.png");
 		tree = new Texture("dead_tree-001.png");
-		gems = new Texture[3];
-		gems[0] = new Texture("diamond.png");
-		gems[1] = new Texture("diamond blue.png");
-		gems[2] = new Texture("diamond red.png");
+		gem = new Texture[3];
+		gem[0] = new Texture("diamond.png");
+		gem[1] = new Texture("diamond blue.png");
+		gem[2] = new Texture("diamond red.png");
+
 	}
 
-	//Need a method that generates random values for X coordinate of projectiles
-	public void createFireball(){
+	//Need a method that generates random values for Y coordinate of projectiles
+	//Create gems
+	public void createGem() {
+		//generate random heights on grid for gems to be placed at
+		float projectileHeight = random.nextFloat() * Gdx.graphics.getHeight();
+		gemY.add((int)projectileHeight);
+        //Create a x coordinate corresponding with y
+		gemX.add(Gdx.graphics.getWidth());
+	}
+
+	//Creates fireball
+	public void createFireball() {
 		float projectileHeight = random.nextFloat() * Gdx.graphics.getHeight();
 		fireballY.add((int)projectileHeight);
-		//When method called, will record width at given height
 		fireballX.add(Gdx.graphics.getWidth());
 	}
 
-	//Create gems
-    public void createGem(){
-        float projectileHeight = random.nextFloat() * Gdx.graphics.getHeight();
-        gemY.add((int)projectileHeight);
-        //When method called, will record width at given height
-        gemX.add(Gdx.graphics.getWidth());
-    }
-
-    //Create trees
-    //This time, the X value will be different
-	public void createTrees(){
-		float projectileHeight = random.nextFloat() * Gdx.graphics.getHeight();
-		treeX.add((int)projectileHeight);
-		treeY.add(Gdx.graphics.getWidth());
+	//Create trees
+	//Height of tree image will be random
+	public void createTree(){
+		float treeHeight = random.nextFloat() * (Gdx.graphics.getHeight() - 300);
+		treeY.add((int)treeHeight);
+		//track the y coordinates so it can shift left
+		treeX.add(Gdx.graphics.getWidth());
 	}
 
 	@Override
@@ -95,51 +97,49 @@ public class MyGdxGame extends ApplicationAdapter {
 		batch.begin();
 		batch.draw(background,0,0,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 
-		//flying
+		//tap to fly
 		if(Gdx.input.justTouched()) {
-			GameState = 1;
 			velocity = -15;
 		}
 
 		//Create the fireballs
-		if(fireballRate < 200){
-			fireballRate++;
+		if (fireballCount < 200) {
+			fireballCount++;
 		} else {
-			fireballRate = 0;
+			fireballCount = 0;
 			createFireball();
 		}
-		//Add the fireballs to the screen
-		for(int i=0; i<fireballX.size(); i++){
+        //Add the fireballs to the screen
+		for (int i=0; i < fireballX.size(); i++) {
 			batch.draw(fireball, fireballX.get(i), fireballY.get(i),150,150);
 			fireballX.set(i, fireballX.get(i) - 8);
 		}
 
-        //Create the fireballs
-        if(gemRate < 100){
-            gemRate++;
-        } else {
-            gemRate = 0;
-            createGem();
-        }
-        //Add the fireballs to the screen
-        for(int i=0; i<gemX.size(); i++){
-            batch.draw(gems[1], gemX.get(i), gemX.get(i),150,150);
-            gemX.set(i, gemX.get(i) - 8);
-        }
-
-		//Create the trees
-		if(treeRate < 100){
-			treeRate++;
+		//Create gems and add them to screen
+		if (gemCount < 100) {
+			gemCount++;
 		} else {
-			treeRate = 0;
-			createTrees();
+			gemCount = 0;
+			createGem();
 		}
-		//Add the fireballs to the screen
-		for(int i=0; i<treeX.size(); i++){
-			batch.draw(tree, treeX.get(i), treeX.get(i));
-			treeX.set(i, treeX.get(i) - 8);
+		for (int i=0;i < gemX.size(); i++) {
+			batch.draw(gem[1], gemX.get(i), gemY.get(i), 100, 100);
+			gemX.set(i, gemX.get(i) - 4);
 		}
 
+        //Create the trees
+		if (treeCount < 300){
+			treeCount++;
+		} else {
+			treeCount = 0;
+			createTree();
+		}
+        //Add trees to screen
+		for (int i=0; i < treeX.size(); i++){
+			//Will have a constant height but X value will change as it goes across screen
+			batch.draw(tree, treeX.get(i), 200,150,treeY.get(i));
+			treeX.set(i, treeX.get(i) - 4);
+		}
 
 		//Speed of the dragon animations every 8th loop; delay
 		if(dragonSpeed < 6){
