@@ -47,6 +47,11 @@ public class MyGdxGame extends ApplicationAdapter {
     ArrayList<Integer> treeX = new ArrayList<Integer>();
     ArrayList<Integer> treeY = new ArrayList<Integer>();
 	ArrayList<Rectangle> treeRectangle = new ArrayList<Rectangle>();
+	Texture rocket;
+	int rocketCount;
+	ArrayList<Integer> rocketX = new ArrayList<Integer>();
+	ArrayList<Integer> rocketY = new ArrayList<Integer>();
+	ArrayList<Rectangle> rocketRectangle = new ArrayList<Rectangle>();
 
 
 
@@ -74,6 +79,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		//Setup textures
 		fireball = new Texture("fireball.png");
 		tree = new Texture("dead_tree-001.png");
+		rocket = new Texture("Red Roket.png");
 		gem = new Texture[3];
 		gem[0] = new Texture("diamond.png");
 		gem[1] = new Texture("diamond blue.png");
@@ -107,6 +113,14 @@ public class MyGdxGame extends ApplicationAdapter {
 		treeX.add(Gdx.graphics.getWidth());
 	}
 
+
+	public void createRocket() {
+		float projectileHeight = random.nextFloat() * Gdx.graphics.getHeight();
+		rocketY.add((int)projectileHeight);
+		rocketX.add(Gdx.graphics.getWidth());
+	}
+
+
 	@Override
 	public void render () {
 		batch.begin();
@@ -122,7 +136,8 @@ public class MyGdxGame extends ApplicationAdapter {
 			}
 
 			//Create the fireballs
-			if (fireballCount < 50) {
+
+			if (fireballCount < 40) {
 				fireballCount++;
 			} else {
 				fireballCount = 0;
@@ -133,14 +148,18 @@ public class MyGdxGame extends ApplicationAdapter {
 			fireballRectangle.clear();
 			for (int i=0; i < fireballX.size(); i++) {
 				batch.draw(fireball, fireballX.get(i), fireballY.get(i),150,150);
-				fireballX.set(i, fireballX.get(i) - 8);
+				if(score < 20) {
+					fireballX.set(i, fireballX.get(i) - 8);
+				} else {
+					fireballX.set(i, fireballX.get(i) - 16);
+				}
 				//Each time fireball is created, add rectangle around it
 				fireballRectangle.add(new Rectangle(fireballX.get(i), fireballY.get(i),fireball.getWidth(),
 						fireball.getHeight()));
 			}
 
 			//Create gems and add them to screen
-			if (gemCount < 100) {
+			if (gemCount < 70) {
 				gemCount++;
 			} else {
 				gemCount = 0;
@@ -154,7 +173,7 @@ public class MyGdxGame extends ApplicationAdapter {
 			}
 
 			//Create the trees
-			if (treeCount < 200){
+			if (treeCount < 150){
 				treeCount++;
 			} else {
 				treeCount = 0;
@@ -167,6 +186,31 @@ public class MyGdxGame extends ApplicationAdapter {
 				batch.draw(tree, treeX.get(i), 200,150,treeY.get(i));
 				treeX.set(i, treeX.get(i) - 4);
 				treeRectangle.add(new Rectangle(treeX.get(i), 200,tree.getWidth(),tree.getHeight()));
+			}
+
+
+			//NEW ROCKETS
+			if(score > 10) {
+				if (rocketCount < 100) {
+					rocketCount++;
+				} else {
+					rocketCount = 0;
+					createRocket();
+				}
+				//Add the fireballs to the screen
+				//Only need to get the current rectangle so clear everytime
+				rocketRectangle.clear();
+				for (int i = 0; i < rocketX.size(); i++) {
+					batch.draw(rocket, rocketX.get(i), rocketY.get(i), 150, 150);
+					if(score < 30) {
+						rocketX.set(i, rocketX.get(i) - 16);
+					} else {
+						rocketX.set(i, rocketX.get(i) - 20);
+					}
+					//Each time fireball is created, add rectangle around it
+					rocketRectangle.add(new Rectangle(rocketX.get(i), rocketY.get(i), rocket.getWidth(),
+							rocket.getHeight()));
+				}
 			}
 
 			//Speed of the dragon animations every 8th loop; delay
@@ -240,7 +284,7 @@ public class MyGdxGame extends ApplicationAdapter {
 					200, 200);
 
 		dragRectangle = new Rectangle(Gdx.graphics.getWidth() - dragon[dragonState].getWidth() - 100, dragY,
-				200,200);
+				100,100);
 
 		//Set up collision detections
 		//Need a for loop to find gem that was collided with
@@ -268,6 +312,18 @@ public class MyGdxGame extends ApplicationAdapter {
 			}
 		}
 
+		//COLLISION FOR ROCKETS
+		for(int j=0; j < rocketRectangle.size(); j++){
+			if(Intersector.overlaps(dragRectangle, rocketRectangle.get(j))) {
+				GameState = 0;
+				font.setColor(Color.RED);
+				font.draw(batch, "Game Over",Gdx.graphics.getWidth() / 5,Gdx.graphics.getHeight() / 2);
+				batch.draw(dragon[4], Gdx.graphics.getWidth() - dragon[dragonState].getWidth() - 100, dragY,
+						200, 200);
+				break;
+			}
+		}
+
 		for(int j=0; j < treeRectangle.size(); j++){
 			if(Intersector.overlaps(dragRectangle, treeRectangle.get(j))) {
 				GameState = 0;
@@ -280,7 +336,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		//After we get data, display it
         font.setColor(Color.WHITE);
-        font.draw(batch, String.valueOf(score),Gdx.graphics.getWidth() - 100,200);
+        font.draw(batch, String.valueOf(score),Gdx.graphics.getWidth() - 150,200);
 
 		batch.end();
 	}
